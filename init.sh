@@ -113,7 +113,8 @@ def sync():
             feishu_raw['accounts'] = {'main': {'appId': old_app_id, 'appSecret': old_app_secret, 'botName': old_bot_name}}
 
         # --- 1. 模型同步 ---
-        if env.get('SYNC_MODEL_CONFIG', 'true').lower() == 'true':
+        sync_model = env.get('SYNC_MODEL_CONFIG', 'true').strip().lower()
+        if sync_model in ('', 'true', '1', 'yes'):
             def sync_provider(p_name, api_key, base_url, protocol, m_ids_str, context_window, max_tokens):
                 if not (api_key and base_url or m_ids_str): return None
                 p = ensure_path(config, ['models', 'providers', p_name])
@@ -304,7 +305,9 @@ if [ "$(id -u)" -eq 0 ]; then
 fi
 
 echo "=== 初始化完成 ==="
-if [ "${SYNC_MODEL_CONFIG:-true}" = "false" ]; then
+SYNC_CHECK="${SYNC_MODEL_CONFIG:-true}"
+SYNC_CHECK=$(echo "$SYNC_CHECK" | tr '[:upper:]' '[:lower:]' | xargs)
+if [ "$SYNC_CHECK" = "false" ] || [ "$SYNC_CHECK" = "0" ] || [ "$SYNC_CHECK" = "no" ]; then
     echo "模型配置: 手动模式 (跳过环境变量同步)"
 else
     # 简单的 shell 逻辑来处理可能的 provider 前缀
