@@ -62,6 +62,14 @@ USER node
 ENV HOME=/home/node
 WORKDIR /home/node
 
+# 安装linuxbrew（Homebrew 的 Linux 版本），并配置环境变量
+RUN mkdir -p /home/node/.linuxbrew/Homebrew && \
+    git clone --depth 1 https://github.com/Homebrew/brew /home/node/.linuxbrew/Homebrew && \
+    mkdir -p /home/node/.linuxbrew/bin && \
+    ln -s /home/node/.linuxbrew/Homebrew/bin/brew /home/node/.linuxbrew/bin/brew && \
+    chown -R node:node /home/node/.linuxbrew && \
+    chmod -R g+rwX /home/node/.linuxbrew
+
 RUN cd /home/node/.openclaw/extensions && \
   git clone --depth 1 https://github.com/soimy/openclaw-channel-dingtalk.git dingtalk && \
   cd dingtalk && \
@@ -101,7 +109,11 @@ ENV HOME=/home/node \
     NODE_PATH=/usr/local/lib/node_modules \
     LANG=en_US.UTF-8 \
     LANGUAGE=en_US:en \
-    LC_ALL=en_US.UTF-8
+    LC_ALL=en_US.UTF-8 \
+    NODE_ENV=production \
+    PATH="/home/node/.linuxbrew/bin:/home/node/.linuxbrew/sbin:/usr/local/lib/node_modules/.bin:${PATH}" \
+    HOMEBREW_NO_AUTO_UPDATE=1 \
+    HOMEBREW_NO_INSTALL_CLEANUP=1
 
 # 暴露端口
 EXPOSE 18789 18790
