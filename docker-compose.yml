@@ -187,8 +187,8 @@ services:
       # 使用命名卷共享 extensions，确保工具容器安装后的插件主容器可见
       - openclaw-extensions:/home/node/.openclaw/extensions
     ports:
-      - "${OPENCLAW_GATEWAY_PORT}:18789"
-      - "${OPENCLAW_BRIDGE_PORT}:18790"
+      - "${OPENCLAW_GATEWAY_PORT}:${OPENCLAW_GATEWAY_PORT}"
+      - "${OPENCLAW_BRIDGE_PORT}:${OPENCLAW_BRIDGE_PORT}"
     init: true
     restart: unless-stopped
 
