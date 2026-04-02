@@ -1,12 +1,15 @@
 # OpenClaw Docker 镜像
 FROM node:22-slim
 
+# 从 Python 官方镜像拷贝 Python 3.12
+COPY --from=python:3.12-slim /usr/local /usr/local
+
 # 设置工作目录
 WORKDIR /app
 
 # 设置环境变量
 ENV BUN_INSTALL="/usr/local" \
-    PATH="/usr/local/python312/bin:/usr/local/bin:$PATH" \
+    PATH="/usr/local/bin:$PATH" \
     DEBIAN_FRONTEND=noninteractive
 
 # 1. 合并系统依赖安装与全局工具安装，并清理缓存
@@ -40,20 +43,12 @@ RUN apt-get update && \
     # 设置 npm 镜像并安装全局包
     npm config set registry https://registry.npmmirror.com && \
     npm install -g openclaw@2026.4.1 opencode-ai@latest clawhub playwright playwright-extra puppeteer-extra-plugin-stealth @steipete/bird && \
-    # 安装 bun、uv 和 qmd，并使用 uv 安装 Python 3.12
+    # 安装 bun、uv 和 qmd
     curl -fsSL https://bun.sh/install | BUN_INSTALL=/usr/local bash && \
     curl -LsSf https://astral.sh/uv/install.sh | env UV_INSTALL_DIR=/usr/local/bin sh && \
-    uv python install 3.12 && \
-    # 将 uv 管理的 python 移动到全局目录，确保 node 用户也可访问
-    PYTHON_PATH=$(uv python find 3.12) && \
-    PYTHON_ROOT=$(dirname $(dirname "$PYTHON_PATH")) && \
-    mv "$PYTHON_ROOT" /usr/local/python312 && \
-    chmod -R 755 /usr/local/python312 && \
-    ln -sf /usr/local/python312/bin/python /usr/local/bin/python3 && \
-    ln -sf /usr/local/python312/bin/python /usr/local/bin/python && \
-    # 移除 EXTERNALLY-MANAGED 限制并安装 websockify
-    find /usr/local/python312 -name EXTERNALLY-MANAGED -delete && \
-    /usr/local/bin/python3 -m pip install --no-cache-dir --break-system-packages websockify && \
+    # 建立 python3 -> python 链接并安装 websockify
+    ln -sf /usr/local/bin/python3 /usr/local/bin/python && \
+    /usr/local/bin/python3 -m pip install --no-cache-dir websockify && \
     npm install -g @tobilu/qmd@1.1.6 && \
     # 安装 Playwright 浏览器依赖
     npx playwright install chromium --with-deps && \
@@ -112,7 +107,7 @@ ENV HOME=/home/node \
     LANGUAGE=en_US:en \
     LC_ALL=en_US.UTF-8 \
     NODE_ENV=production \
-    PATH="/home/node/.linuxbrew/bin:/home/node/.linuxbrew/sbin:/usr/local/lib/node_modules/.bin:/usr/local/python312/bin:${PATH}" \
+    PATH="/home/node/.linuxbrew/bin:/home/node/.linuxbrew/sbin:/usr/local/lib/node_modules/.bin:${PATH}" \
     HOMEBREW_NO_AUTO_UPDATE=1 \
     HOMEBREW_NO_INSTALL_CLEANUP=1
 
