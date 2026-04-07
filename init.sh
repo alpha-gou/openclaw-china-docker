@@ -2184,7 +2184,9 @@ install_agent_reach() {
         check_output="$(gosu node bash -c "
             export PATH=\$PATH:/home/node/.local/bin
             $pip_index_env
-            source ~/.agent-reach-venv/bin/activate
+            if [ -f ~/.agent-reach-venv/bin/activate ]; then
+                source ~/.agent-reach-venv/bin/activate
+            fi
             /home/node/.agent-reach-venv/bin/agent-reach check-update 2>&1 || true
         ")"
         echo "$check_output"
@@ -2198,7 +2200,9 @@ install_agent_reach() {
         gosu node bash -c "
             export PATH=\$PATH:/home/node/.local/bin
             $pip_index_env
-            source ~/.agent-reach-venv/bin/activate
+            if [ -f ~/.agent-reach-venv/bin/activate ]; then
+                source ~/.agent-reach-venv/bin/activate
+            fi
             pip install --upgrade pip $pip_mirror
             pip install --upgrade $github_url $pip_mirror
         "
@@ -2206,6 +2210,9 @@ install_agent_reach() {
         gosu node bash -c "
             export PATH=\$PATH:/home/node/.local/bin
             $pip_index_env
+            if [ ! -d ~/.agent-reach-venv ]; then
+                python3 -m venv ~/.agent-reach-venv
+            fi
             source ~/.agent-reach-venv/bin/activate
             pip install --upgrade pip $pip_mirror
             pip install $github_url $pip_mirror
@@ -2216,7 +2223,9 @@ install_agent_reach() {
     gosu node bash -c "
         export PATH=\$PATH:/home/node/.local/bin
         $pip_index_env
-        source ~/.agent-reach-venv/bin/activate
+        if [ -f ~/.agent-reach-venv/bin/activate ]; then
+            source ~/.agent-reach-venv/bin/activate
+        fi
 
         # 配置代理（如果提供）
         if [ -n \"\$AGENT_REACH_PROXY\" ]; then
