@@ -186,6 +186,7 @@ services:
     user: ${OPENCLAW_RUN_USER:-0:0}
     environment: *openclaw-common-env
     volumes:
+      - ./init.sh:/usr/local/bin/init.sh  # 临时修复init
       - ${OPENCLAW_DATA_DIR}:/home/node/.openclaw
       # 使用命名卷共享 extensions，确保工具容器安装后的插件主容器可见
       - openclaw-extensions:/home/node/.openclaw/extensions
