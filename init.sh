@@ -17,9 +17,6 @@ log_section() {
 modify_node_uid_gid() {
     log_section "修改 Node 用户 UID/GID"
 
-    echo "临时修复……"
-    npm install @larksuiteoapi/node-sdk --legacy-peer-deps
-
     # 从环境变量读取目标 UID/GID
     local TARGET_UID="${TARGET_UID:-1000}"
     local TARGET_GID="${TARGET_GID:-1000}"
