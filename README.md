@@ -1,4 +1,4 @@
-# OpenClaw-China-Docker (暂停更新)
+# OpenClaw-China-Docker (alpha-gou维护版)
 
 > 面向中国 IM 场景的 OpenClaw Docker 整合镜像，预装飞书、钉钉、QQ 机器人、企业微信等常用插件，适合快速搭建统一的 AI 机器人网关。
 
@@ -6,24 +6,6 @@
 
 > 💡 **AI 助手提示**：克隆本项目并准备好渠道机器人与 AI API 信息填入 `.env.example` 文件中，在 AI CLI（如 Claude Code/Gemini CLI）中输入：`请参考 .env.example，quick-start.md 和 docker-compose.yml 帮我完成本项目的部署与环境配置`。
 
-<table align="center">
-  <thead>
-    <tr>
-      <th align="center">镜像下载量超100k</th>
-      <th align="center">好用给个赞助吧</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td align="center" valign="middle">
-        <img src="https://docker-card.justlikemaki.workers.dev/justlikemaki/openclaw-docker-cn-im?layout=compact&theme=github" alt="openclaw-docker-cn-im" style="width: 100%; max-width: 520px; height: 320px; object-fit: contain;" />
-      </td>
-      <td align="center" valign="middle">
-        <img src="sponsor.png" alt="微信赞赏码" style="width: 100%; max-width: 260px; height: 320px; object-fit: cover; object-position: center;" />
-      </td>
-    </tr>
-  </tbody>
-</table>
 
 ## 🚀 核心特性
 
@@ -76,12 +58,6 @@ docker compose up -d
 - 每次升级前，先同步 [`README.md`](README.md)、[`docker-compose.yml`](docker-compose.yml)、[`.env.example`](.env.example) 与新增文档
 - 如果你手动维护 [`openclaw.json`](openclaw.json.example)，建议同时关注 [`openclaw.json.example`](openclaw.json.example) 的结构变化
 - 如需启用 **Docker 沙箱** 功能，请确保在 `.env` 中设置 `OPENCLAW_SANDBOX_MODE=all` (或 `non-main`)，并取消 `docker-compose.yml` 中 `/var/run/docker.sock` 挂载行的注释。
-
-## 📈 Star History
-
-- 如果项目对你有帮助，欢迎点一个 Star。
-
-[![Star History Chart](https://api.star-history.com/svg?repos=justlovemaki/OpenClaw-China-Docker&type=Date)](https://star-history.com/#justlovemaki/OpenClaw-China-Docker&Date)
 
 ## 许可证
 
