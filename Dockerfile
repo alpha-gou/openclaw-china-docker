@@ -42,7 +42,7 @@ RUN apt-get update && \
     git config --system url."https://github.com/".insteadOf ssh://git@github.com/ && \
     # 设置 npm 镜像并安装全局包
     npm config set registry https://registry.npmmirror.com && \
-    npm install -g openclaw@2026.4.15 opencode-ai@latest clawhub playwright playwright-extra puppeteer-extra-plugin-stealth @steipete/bird && \
+    npm install -g openclaw@2026.5.28 opencode-ai@latest clawhub playwright playwright-extra puppeteer-extra-plugin-stealth @steipete/bird && \
     # 安装 bun、uv 和 qmd
     curl -fsSL https://bun.sh/install | BUN_INSTALL=/usr/local bash && \
     curl -LsSf https://astral.sh/uv/install.sh | env UV_INSTALL_DIR=/usr/local/bin sh && \
@@ -76,7 +76,8 @@ RUN mkdir -p /home/node/.linuxbrew/Homebrew && \
 ARG CLAWHUB_TOKEN
 RUN if [ -n "$CLAWHUB_TOKEN" ]; then clawhub login --token "$CLAWHUB_TOKEN"; fi && \
   cd /home/node/.openclaw/extensions && \
-  git clone --depth 1 -b v4.17.25 https://github.com/Daiyimo/openclaw-napcat.git napcat && \
+#   git clone --depth 1 -b v4.17.25 https://github.com/Daiyimo/openclaw-napcat.git napcat && \
+  git clone --depth 1 https://github.com/Daiyimo/openclaw-napcat.git napcat && \
   cd napcat && \
   npm install --production && \
   timeout 300 openclaw plugins install --dangerously-force-unsafe-install -l . || true && \
@@ -90,7 +91,7 @@ RUN if [ -n "$CLAWHUB_TOKEN" ]; then clawhub login --token "$CLAWHUB_TOKEN"; fi 
   # npx -y @larksuite/openclaw-lark-tools install && \
   find /home/node/.openclaw/extensions -name ".git" -type d -exec rm -rf {} + && \
   mv /home/node/.openclaw/extensions /home/node/.openclaw-seed/ && \
-  printf '%s\n' '2026.4.15-f1' > /home/node/.openclaw-seed/extensions/.seed-version && \
+  printf '%s\n' '2026.5.28-f1' > /home/node/.openclaw-seed/extensions/.seed-version && \
   rm -rf /tmp/* /home/node/.npm /home/node/.cache
   
 # 3. 最终配置
