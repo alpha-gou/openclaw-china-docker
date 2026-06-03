@@ -2,7 +2,8 @@
 FROM node:22-slim
 
 # 从 Python 官方镜像拷贝 Python 3.12 (确保使用与 node 镜像一致的 Debian Bookworm 版本)
-COPY --from=python:3.12-slim-bookworm /usr/local /usr/local
+# COPY --from=python:3.12-slim-bookworm /usr/local /usr/local
+COPY --from=registry.cn-hangzhou.aliyuncs.com/library/python:3.12-slim-bookworm /usr/local /usr/local
 
 # 设置工作目录
 WORKDIR /app
