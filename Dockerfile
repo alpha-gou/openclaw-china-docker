@@ -2,7 +2,7 @@
 # FROM node:22-slim
 FROM docker.m.daocloud.io/node:22-slim
 
-# 从 Python 官方镜像拷贝 Python 3.12 (确保使用与 node 镜像一致的 Debian Bookworm 版本)
+# 从 国内镜像源 拷贝 Python 3.12 (确保使用与 node 镜像一致的 Debian Bookworm 版本)
 # COPY --from=python:3.12-slim-bookworm /usr/local /usr/local
 COPY --from=docker.m.daocloud.io/python:3.12-slim-bookworm /usr/local /usr/local
 
@@ -14,51 +14,84 @@ ENV BUN_INSTALL="/usr/local" \
     PATH="/usr/local/bin:$PATH" \
     DEBIAN_FRONTEND=noninteractive
 
-# 1. 合并系统依赖安装与全局工具安装，并清理缓存
-# RUN apt-get update && \
-RUN sed -i 's|http://deb.debian.org/debian|https://mirrors.ustc.edu.cn/debian|g' /etc/apt/sources.list && \
-  sed -i 's|http://security.debian.org/debian-security|https://mirrors.ustc.edu.cn/debian-security|g' /etc/apt/sources.list && \
-  apt-get update && \
-  apt-get install -y --no-install-recommends \
+# 1. 环境安装
+# 第一阶段：换源和基础更新
+RUN rm -f /etc/apt/sources.list.d/* && \
+    echo "deb http://mirrors.ustc.edu.cn/debian/ bookworm main contrib non-free non-free-firmware" > /etc/apt/sources.list && \
+    echo "deb http://mirrors.ustc.edu.cn/debian-security/ bookworm-security main contrib non-free non-free-firmware" >> /etc/apt/sources.list && \
+    apt-get update
+
+# 第二阶段：安装基础工具
+RUN apt-get install -y --no-install-recommends \
     bash \
     ca-certificates \
-    chromium \
     curl \
-    docker.io \
-    build-essential \
-    ffmpeg \
-    fonts-liberation \
-    fonts-noto-cjk \
-    fonts-noto-color-emoji \
     git \
-    gosu \
-    jq \
     locales \
     openssh-client \
     procps \
+    unzip \
+    jq \
     socat \
     tini \
-    unzip && \
-    sed -i 's/^# *en_US.UTF-8 UTF-8$/en_US.UTF-8 UTF-8/' /etc/locale.gen && \
+    gosu \
+    build-essential \
+    docker.io
+
+# 第三阶段：安装多媒体和字体
+RUN apt-get install -y --no-install-recommends \
+    ffmpeg \
+    fonts-liberation \
+    fonts-noto-cjk \
+    fonts-noto-color-emoji
+
+# 第四阶段：Chromium 单独安装（容易出问题）
+RUN apt-get install -y --no-install-recommends chromium
+
+# 第五阶段：Locale 配置
+RUN sed -i 's/^# *en_US.UTF-8 UTF-8$/en_US.UTF-8 UTF-8/' /etc/locale.gen && \
     locale-gen && \
-    # update-locale 在部分 slim 基础镜像中会返回 invalid locale settings，这里改为直接写入默认 locale 配置
-    printf 'LANG=en_US.UTF-8\nLANGUAGE=en_US:en\nLC_ALL=en_US.UTF-8\n' > /etc/default/locale && \
-    # 配置 git 使用 HTTPS 替代 SSH
-    git config --system url."https://github.com/".insteadOf ssh://git@github.com/ && \
-    # 设置 npm 镜像并安装全局包
-    npm config set registry https://registry.npmmirror.com && \
-    npm install -g openclaw@2026.5.28 opencode-ai@latest clawhub playwright playwright-extra puppeteer-extra-plugin-stealth @steipete/bird && \
-    # 安装 bun、uv 和 qmd
-    curl -fsSL https://bun.sh/install | BUN_INSTALL=/usr/local bash && \
-    curl -LsSf https://astral.sh/uv/install.sh | env UV_INSTALL_DIR=/usr/local/bin sh && \
-    # 建立 python3 -> python 链接并安装 websockify
+    printf 'LANG=en_US.UTF-8\nLANGUAGE=en_US:en\nLC_ALL=en_US.UTF-8\n' > /etc/default/locale
+
+# 第六阶段：Git 和 NPM 配置
+RUN git config --system url."https://github.com/".insteadOf ssh://git@github.com/ && \
+    npm config set registry https://registry.npmmirror.com
+
+# 第七阶段：Node.js 工具安装（单独一层，便于缓存）
+RUN npm install -g openclaw@2026.5.28 opencode-ai@latest clawhub playwright playwright-extra puppeteer-extra-plugin-stealth @steipete/bird
+
+# 第八阶段：安装运行时工具
+# RUN curl -fsSL https://bun.sh/install | BUN_INSTALL=/usr/local bash && \
+    # curl -LsSf https://astral.sh/uv/install.sh | env UV_INSTALL_DIR=/usr/local/bin sh
+RUN npm install -g bun && \
     ln -sf /usr/local/bin/python3 /usr/local/bin/python && \
-    /usr/local/bin/python3 -m pip install --no-cache-dir websockify && \
-    npm install -g @tobilu/qmd@1.1.6 && \
-    # 安装 Playwright 浏览器依赖
-    npx playwright install chromium --with-deps && \
-    # 清理 apt 缓存
-    apt-get purge -y --auto-remove && \
+    /usr/local/bin/python3 -m pip install --break-system-packages --index-url https://mirrors.aliyun.com/pypi/simple/ uv && \
+    /usr/local/bin/python3 -m pip install --no-cache-dir --index-url https://mirrors.aliyun.com/pypi/simple/ websockify
+
+# 第九阶段：QMD
+RUN npm install -g @tobilu/qmd@1.1.6
+
+# 第十阶段：Playwright
+RUN CHROMIUM_REV=1223 && \
+    CFT_VER=148.0.7778.96 && \
+    TARGET_DIR=/root/.cache/ms-playwright/chromium-${CHROMIUM_REV} && \
+    mkdir -p ${TARGET_DIR}/chrome-linux64 && \
+    cd /tmp && \
+    curl -fL \
+      "https://cdn.npmmirror.com/binaries/chrome-for-testing/${CFT_VER}/linux64/chrome-linux64.zip" \
+      -o chrome.zip && \
+    unzip -q chrome.zip && \
+    # 把解压后的内容放到 playwright 期望的位置
+    cp -r chrome-linux64/* ${TARGET_DIR}/chrome-linux64/ && \
+    # 写入标记文件（playwright 靠这个判断 installed）
+    date > ${TARGET_DIR}/INSTALLATION_COMPLETE && \
+    rm -rf /tmp/chrome.zip /tmp/chrome-linux64
+
+# 验证（可选，build 阶段就能提前暴露问题）
+RUN npx playwright install-deps chromium || true
+
+# 第十一阶段：清理
+RUN apt-get purge -y --auto-remove && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/* /tmp/* /root/.npm /root/.cache
 
@@ -88,7 +121,7 @@ RUN if [ -n "$CLAWHUB_TOKEN" ]; then clawhub login --token "$CLAWHUB_TOKEN"; fi 
   timeout 300 openclaw plugins install --dangerously-force-unsafe-install -l . || true && \
   cd /home/node/.openclaw/extensions && \
 #   timeout 300 openclaw plugins install --dangerously-force-unsafe-install @soimy/dingtalk || true && \
-  timeout 300 openclaw plugins install --dangerously-force-unsafe-install @tencent-connect/openclaw-qqbot@latest || true && \
+  timeout 300 openclaw plugins install --dangerously-force-unsafe-install @openclaw/qqbot || true && \
 #   timeout 300 openclaw plugins install --dangerously-force-unsafe-install @sunnoy/wecom || true && \
   mkdir -p /home/node/.openclaw /home/node/.openclaw-seed && \
   # 预执行安装命令（容器内需手动交互，此处仅作声明或环境准备）
