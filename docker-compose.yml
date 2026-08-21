@@ -206,6 +206,8 @@ services:
     environment:
       # 对外固定 IP（公网服务器填公网 IP），自签证书 SAN，在 .env 里配置
       CADDY_IP: ${CADDY_IP}
+      # openclaw 网关端口，须与 OPENCLAW_GATEWAY_PORT 一致，Caddy 据此反代上游
+      OPENCLAW_GATEWAY_PORT: ${OPENCLAW_GATEWAY_PORT:-18789}
     ports:
       # 只暴露 HTTPS 443，不做 80 映射（强制 https 访问）
       - "${CADDY_PORT:-443}:443"
