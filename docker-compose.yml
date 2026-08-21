@@ -193,9 +193,28 @@ services:
       # 沙箱支持：如需启用 Docker 沙箱，请取消下面一行的注释并确保 .env 中 OPENCLAW_SANDBOX_MODE 不为 off
       # - /var/run/docker.sock:/var/run/docker.sock
     ports:
-      - "${DOCKER_BIND:-0.0.0.0}:${OPENCLAW_GATEWAY_PORT}:${OPENCLAW_GATEWAY_PORT}"
+      # 明文 18789 只绑 loopback，仅本机可达，网络层不可达；
+      # 保留 SSH 隧道访问方式：ssh -L 18789:127.0.0.1:18789 user@host
+      - "127.0.0.1:${OPENCLAW_GATEWAY_PORT}:${OPENCLAW_GATEWAY_PORT}"
     init: true
     restart: unless-stopped
+
+  caddy:
+    container_name: caddy
+    image: caddy:2-alpine
+    restart: unless-stopped
+    environment:
+      # 对外固定 IP（公网服务器填公网 IP），自签证书 SAN，在 .env 里配置
+      CADDY_IP: ${CADDY_IP}
+    ports:
+      # 只暴露 HTTPS 443，不做 80 映射（强制 https 访问）
+      - "${CADDY_PORT:-443}:443"
+    volumes:
+      - ./caddy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - ./caddy_data:/data
+      - ./caddy_config:/config
+    depends_on:
+      - openclaw-gateway
 
   openclaw-installer:
     container_name: openclaw-installer

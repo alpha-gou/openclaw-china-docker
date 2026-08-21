@@ -1,0 +1,29 @@
+# Caddyfile — OpenClaw HTTPS 反向代理（自签证书）
+#
+# 用途：
+#   对访问者终止 TLS，把明文 HTTP 流量转发给 openclaw 网关，
+#   解决 HTTP 明文被抓包/篡改的问题。openclaw 侧零改动。
+#
+# 访问方式：https://<CADDY_IP>
+#   CADDY_IP 填客户端实际访问时浏览器里输入的那个 IP：
+#   - 公网服务器（如阿里云 ECS）→ 填公网 IP
+#   - 仅内网访问 → 填内网 IP
+#
+# 首次启动后导出根 CA 给客户端信任，可消除浏览器警告：
+#   cat caddy_data/pki/authorities/local/root.crt
+#
+# 提示：若后续能拿到域名（可泛解析到本机），建议改成
+#   https://你的域名 { tls { email 你的邮箱 } reverse_proxy openclaw-gateway:18789 }
+# 走 Let's Encrypt 自动申请浏览器原生信任的证书，客户端无需安装根证书。
+
+{
+  email off
+  auto_https disable_redirects
+}
+
+# 把 {$CADDY_IP} 换成你的固定对外 IP（在 .env 里一次性配置）
+https://{$CADDY_IP}:443 {
+  # 自签证书：Caddy 用自己的 local CA 给该 IP 签 SAN 证书
+  tls internal
+  reverse_proxy openclaw-gateway:18789
+}

@@ -10,6 +10,15 @@
 
 - openclaw 升级为最新正式版（2026.6.1）
 - 镜像构建时支持国内环境，在阿里云服务器上运行良好。（对于window、linux可能不支持）
+- 新增 Caddy HTTPS 反向代理（默认启用）：对外只暴露加密 443，默认关闭明文 18789，公网/内网访问更安全。**注意**：需要在 `.env` 配置 `CADDY_IP`（公网服务器填公网 IP，且要与客户端实际访问地址一致），未配置会导致 `caddy` 容器启动失败。用不到 HTTPS 时可注释掉 `docker-compose.yml` 中的 `caddy` service 并还原网关明文端口。详见 [HTTPS 反向代理](docs/caddy-https.md)。
+
+## 项目简介
+
+OpenClaw 的国内环境 Docker 一键部署方案（alpha-gou 维护版），基于 [justlikemaki/openclaw-china-docker](https://github.com/justlovemaki/openclaw-china-docker) 二次维护。
+
+- 将命令行 AI 助手 OpenClaw 打包为可直接运行的 Docker 服务，提供 Web 控制台与多种 IM 渠道机器人（Telegram / 飞书 / 钉钉 / 企业微信 / QQ / NapCat）。
+- 面向中国大陆环境优化：使用国内 Debian / 阿里云 / npmmirror 镜像源，在阿里云 ECS 上开箱即用。
+- 内置 Caddy HTTPS 反向代理，对外仅暴露加密 443、默认关闭明文 18789，保护网关鉴权与对话流量不被抓包。
 
 
 
