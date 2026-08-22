@@ -70,7 +70,24 @@ cp .env.example .env
 
 > 完整可选项见 [`.env.example`](.env.example)，IM 渠道（飞书/钉钉/企微/QQ/Telegram/NapCat）按需填写。
 
-### 4. 启动容器
+### 4. 生成 HTTPS 自签证书（首次部署）
+
+Caddy 默认启用 HTTPS 反向代理，需先为你的访问 IP 生成一张自签证书。**公网 IP 必须手动生成**——Caddy 内置的 `tls internal` 只支持内网/本地地址，无法为公网 IP 签发，会报 `tlsv1 alert internal error`。
+
+```bash
+sh caddy/generate-cert.sh <你的CADDY_IP>
+# 例如：sh caddy/generate-cert.sh 123.57.245.84
+```
+
+生成 `caddy/caddy.crt` 与 `caddy/caddy.key`（已加入 `.gitignore`，勿提交）。
+
+> 若报错 `Is a directory`：说明 Docker 之前已把同名路径建成了空目录，先删掉再生成：
+> ```bash
+> rm -rf caddy/caddy.crt caddy/caddy.key
+> sh caddy/generate-cert.sh <你的CADDY_IP>
+> ```
+
+### 5. 启动容器
 
 ```bash
 docker compose up -d
@@ -83,14 +100,14 @@ docker compose logs -f
 docker compose down
 ```
 
-### 5. 访问服务
+### 6. 访问服务
 
-```bash
+```text
 https://<CADDY_IP>
 ```
 
-- 浏览器首次访问会有自签证书警告，安装 Caddy 根证书可消除（见 [HTTPS 反向代理](docs/caddy-https.md)）。
-- 明文 `18789` 已绑 `127.0.0.1`，仅本机可达；需要明文兜底时走 SSH 隧道：`ssh -L 18789:127.0.0.1:18789 user@host`。
+- 浏览器首次访问会有自签证书警告，点「高级 → 继续前往」可临时放行；把 `caddy/caddy.crt` 装到客户端「受信任的根证书颁发机构」可永久消除警告（详见 [HTTPS 反向代理](docs/caddy-https.md)）。
+- 明文网关端口已绑 `127.0.0.1`，仅本机可达；需要明文兜底时走 SSH 隧道：`ssh -L <OPENCLAW_GATEWAY_PORT>:127.0.0.1:<OPENCLAW_GATEWAY_PORT> user@host`。
 
 更多细节见 [快速开始](docs/quick-start.md) 与 [配置指南](docs/configuration.md)。
 

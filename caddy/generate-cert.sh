@@ -31,8 +31,7 @@ openssl req -x509 -nodes -days 3650 -newkey rsa:2048 \
   -keyout "$DIR/caddy.key" \
   -out "$DIR/caddy.crt" \
   -subj "/CN=$IP" \
-  -addext "subjectAltName=$SAN" \
-  -addext "basicConstraints=critical,CA:TRUE"
+  -addext "subjectAltName=$SAN"
 
 echo "✅ 完成："
 echo "   证书：$DIR/caddy.crt"
