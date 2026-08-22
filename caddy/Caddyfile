@@ -9,12 +9,14 @@
 #   - 公网服务器（如阿里云 ECS）→ 填公网 IP
 #   - 仅内网访问 → 填内网 IP
 #
-# 首次启动后导出根 CA 给客户端信任，可消除浏览器警告：
-#   cat caddy_data/pki/authorities/local/root.crt
+# 证书：使用手动生成的自签证书（caddy.crt / caddy.key），
+#   由 caddy/generate-cert.sh 按 CADDY_IP 生成，SAN 含该 IP。
+#   不用 Caddy 内置的 `tls internal`，因为它只支持内网/本地
+#   地址，无法为公网 IP 签发自签证书（会报 tlsv1 internal error）。
 #
-# 提示：若后续能拿到域名（可泛解析到本机），建议改成
-#   https://你的域名 { tls { email 你的邮箱 } reverse_proxy openclaw-gateway:{$OPENCLAW_GATEWAY_PORT:18789} }
-# 走 Let's Encrypt 自动申请浏览器原生信任的证书，客户端无需安装根证书。
+# 首次启动前先生成证书：
+#   sh caddy/generate-cert.sh <你的IP>
+# 客户端信任 caddy.crt 可消除浏览器警告。
 
 {
   email off
@@ -23,7 +25,6 @@
 
 # 把 {$CADDY_IP} 换成你的固定对外 IP（在 .env 里一次性配置）
 https://{$CADDY_IP}:443 {
-  # 自签证书：Caddy 用自己的 local CA 给该 IP 签 SAN 证书
-  tls internal
+  tls /etc/caddy/caddy.crt /etc/caddy/caddy.key
   reverse_proxy openclaw-gateway:{$OPENCLAW_GATEWAY_PORT:18789}
 }

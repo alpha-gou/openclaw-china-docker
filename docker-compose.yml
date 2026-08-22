@@ -213,6 +213,8 @@ services:
       - "${CADDY_PORT:-443}:443"
     volumes:
       - ./caddy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - ./caddy/caddy.crt:/etc/caddy/caddy.crt:ro
+      - ./caddy/caddy.key:/etc/caddy/caddy.key:ro
       - ./caddy_data:/data
       - ./caddy_config:/config
     depends_on:

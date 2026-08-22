@@ -6,3 +6,7 @@
 # Caddy 运行时数据（自签证书、配置）
 caddy_data/
 caddy_config/
+
+# 自签证书与私钥（generate-cert.sh 生成，勿提交）
+caddy/caddy.crt
+caddy/caddy.key
