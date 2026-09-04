@@ -96,35 +96,54 @@ ENV HOME=/home/node
 WORKDIR /home/node
 
 # 安装linuxbrew（Homebrew 的 Linux 版本），并配置环境变量
-RUN mkdir -p /home/node/.linuxbrew/Homebrew && \
-    git clone --depth 1 https://github.com/Homebrew/brew /home/node/.linuxbrew/Homebrew && \
-    mkdir -p /home/node/.linuxbrew/bin && \
-    ln -s /home/node/.linuxbrew/Homebrew/bin/brew /home/node/.linuxbrew/bin/brew && \
-    chown -R node:node /home/node/.linuxbrew && \
-    chmod -R g+rwX /home/node/.linuxbrew
+# 默认已注释：init.sh 不依赖 linuxbrew，且其 git clone（github）较慢。
+# 如需让 agent 可用 brew（安装额外命令行工具），取消下面整段注释即可。
+# RUN mkdir -p /home/node/.linuxbrew/Homebrew && \
+#     git clone --depth 1 https://gh.llkk.cc/https://github.com/Homebrew/brew /home/node/.linuxbrew/Homebrew && \
+#     mkdir -p /home/node/.linuxbrew/bin && \
+#     ln -s /home/node/.linuxbrew/Homebrew/bin/brew /home/node/.linuxbrew/bin/brew && \
+#     chown -R node:node /home/node/.linuxbrew && \
+#     chmod -R g+rwX /home/node/.linuxbrew
 
 ARG CLAWHUB_TOKEN
-RUN if [ -n "$CLAWHUB_TOKEN" ]; then clawhub login --token "$CLAWHUB_TOKEN"; fi && \
-  cd /home/node/.openclaw/extensions && \
-  git clone --depth 1 https://github.com/Daiyimo/openclaw-napcat.git napcat && \
-  cd napcat && \
-  npm install --production && \
-  timeout 300 openclaw plugins install --dangerously-force-unsafe-install -l . || true && \
-  cd /home/node/.openclaw/extensions && \
-#   timeout 300 openclaw plugins install --dangerously-force-unsafe-install @soimy/dingtalk || true && \
-  timeout 300 openclaw plugins install --dangerously-force-unsafe-install @openclaw/qqbot || true && \
-#   timeout 300 openclaw plugins install --dangerously-force-unsafe-install @sunnoy/wecom || true && \
-  mkdir -p /home/node/.openclaw /home/node/.openclaw-seed && \
-  find /home/node/.openclaw/extensions -name ".git" -type d -exec rm -rf {} + && \
-  mv /home/node/.openclaw/extensions /home/node/.openclaw-seed/ && \
-  # 使用构建参数或获取实际版本
-  if [ "$OPENCLAW_VERSION" = "latest" ]; then \
-    VERSION_TO_WRITE="$(openclaw --version 2>/dev/null | head -n1 | sed 's/.* //' || date '+%Y.%-m.%-d')-f1"; \
-  else \
-    VERSION_TO_WRITE="${OPENCLAW_VERSION}-f1"; \
-  fi && \
-  printf '%s\n' "$VERSION_TO_WRITE" > /home/node/.openclaw-seed/extensions/.seed-version && \
-  rm -rf /tmp/* /home/node/.npm /home/node/.cache
+# IM 渠道插件安装：默认全部注释，按需取消注释对应渠道。
+# 注意：装了任意渠道后，需一并取消下面"seed 打包"段的注释，否则插件不会固化进镜像
+# （运行时 extensions 命名卷会覆盖镜像层，导致 build 时装的插件不可见）。
+
+# 公共：clawhub 登录（拉取私有扩展时需要）
+# RUN if [ -n "$CLAWHUB_TOKEN" ]; then clawhub login --token "$CLAWHUB_TOKEN"; fi
+
+# —— napcat（QQ/OneBot 桥接，需 git clone + npm install）——
+# RUN cd /home/node/.openclaw/extensions && \
+#     git clone --depth 1 https://gh.llkk.cc/https://github.com/Daiyimo/openclaw-napcat.git napcat && \
+#     cd napcat && \
+#     npm install --production && \
+#     timeout 300 openclaw plugins install --dangerously-force-unsafe-install -l . || true
+
+# —— 钉钉 dingtalk ——
+# RUN cd /home/node/.openclaw/extensions && \
+#     timeout 300 openclaw plugins install --dangerously-force-unsafe-install @soimy/dingtalk || true
+
+# —— QQ qqbot ——
+RUN cd /home/node/.openclaw/extensions && \
+    timeout 300 openclaw plugins install --dangerously-force-unsafe-install @openclaw/qqbot || true
+
+# —— 企业微信 wecom ——
+# RUN cd /home/node/.openclaw/extensions && \
+#     timeout 300 openclaw plugins install --dangerously-force-unsafe-install @sunnoy/wecom || true
+
+# seed 打包：把上面已安装的插件固化为镜像内置 seed（运行时按 SYNC_EXTENSIONS_MODE 同步到卷）
+# 装了任意渠道后取消下面注释，以生成 seed
+RUN mkdir -p /home/node/.openclaw /home/node/.openclaw-seed && \
+    find /home/node/.openclaw/extensions -name ".git" -type d -exec rm -rf {} + && \
+    mv /home/node/.openclaw/extensions /home/node/.openclaw-seed/ && \
+    if [ "$OPENCLAW_VERSION" = "latest" ]; then \
+      VERSION_TO_WRITE="$(openclaw --version 2>/dev/null | head -n1 | sed 's/.* //' || date '+%Y.%-m.%-d')-f1"; \
+    else \
+      VERSION_TO_WRITE="${OPENCLAW_VERSION}-f1"; \
+    fi && \
+    printf '%s\n' "$VERSION_TO_WRITE" > /home/node/.openclaw-seed/extensions/.seed-version && \
+    rm -rf /tmp/* /home/node/.npm /home/node/.cache
 
 # 3. 最终配置
 USER root
