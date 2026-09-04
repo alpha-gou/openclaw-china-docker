@@ -125,8 +125,8 @@ ARG CLAWHUB_TOKEN
 #     timeout 300 openclaw plugins install --dangerously-force-unsafe-install @soimy/dingtalk || true
 
 # —— QQ qqbot ——
-RUN cd /home/node/.openclaw/extensions && \
-    timeout 300 openclaw plugins install --dangerously-force-unsafe-install @openclaw/qqbot || true
+# RUN cd /home/node/.openclaw/extensions && \
+#     timeout 300 openclaw plugins install --dangerously-force-unsafe-install @openclaw/qqbot || true
 
 # —— 企业微信 wecom ——
 # RUN cd /home/node/.openclaw/extensions && \
@@ -134,16 +134,16 @@ RUN cd /home/node/.openclaw/extensions && \
 
 # seed 打包：把上面已安装的插件固化为镜像内置 seed（运行时按 SYNC_EXTENSIONS_MODE 同步到卷）
 # 装了任意渠道后取消下面注释，以生成 seed
-RUN mkdir -p /home/node/.openclaw /home/node/.openclaw-seed && \
-    find /home/node/.openclaw/extensions -name ".git" -type d -exec rm -rf {} + && \
-    mv /home/node/.openclaw/extensions /home/node/.openclaw-seed/ && \
-    if [ "$OPENCLAW_VERSION" = "latest" ]; then \
-      VERSION_TO_WRITE="$(openclaw --version 2>/dev/null | head -n1 | sed 's/.* //' || date '+%Y.%-m.%-d')-f1"; \
-    else \
-      VERSION_TO_WRITE="${OPENCLAW_VERSION}-f1"; \
-    fi && \
-    printf '%s\n' "$VERSION_TO_WRITE" > /home/node/.openclaw-seed/extensions/.seed-version && \
-    rm -rf /tmp/* /home/node/.npm /home/node/.cache
+# RUN mkdir -p /home/node/.openclaw /home/node/.openclaw-seed && \
+#     find /home/node/.openclaw/extensions -name ".git" -type d -exec rm -rf {} + && \
+#     mv /home/node/.openclaw/extensions /home/node/.openclaw-seed/ && \
+#     if [ "$OPENCLAW_VERSION" = "latest" ]; then \
+#       VERSION_TO_WRITE="$(openclaw --version 2>/dev/null | head -n1 | sed 's/.* //' || date '+%Y.%-m.%-d')-f1"; \
+#     else \
+#       VERSION_TO_WRITE="${OPENCLAW_VERSION}-f1"; \
+#     fi && \
+#     printf '%s\n' "$VERSION_TO_WRITE" > /home/node/.openclaw-seed/extensions/.seed-version && \
+#     rm -rf /tmp/* /home/node/.npm /home/node/.cache
 
 # 3. 最终配置
 USER root
